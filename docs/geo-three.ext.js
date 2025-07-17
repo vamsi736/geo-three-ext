@@ -8,7 +8,7 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
          0)  Mapbox provider
         -------------------------------------------------------------*/
         const MAPBOX_TOKEN = "pk.eyJ1IjoidmFtc2k3MzYiLCJhIjoiY21kNnpyeHViMDQwYjJpczhwdnk5bmRqaSJ9.gYlJEd0xPN7YJVehWuvgPA";
-        const MAPBOX_STYLE = "mapbox/streets-v11";   // try "satellite-v9" etc.
+        const MAPBOX_STYLE = "mapbox/satellite-v9";   // try "satellite-v9" etc.
         const provider     = new Geo.MapBoxProvider(
                                 MAPBOX_TOKEN,
                                 MAPBOX_STYLE,
