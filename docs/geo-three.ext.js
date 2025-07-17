@@ -28,10 +28,13 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
 
     // IMPORTANT: this will *also* rotate the map once by +90° about X
     map.setRoot(dohaRoot);
+    // --- make map lie flat, normal = +Z ---
+    map.rotation.set(Math.PI / 2, 0, 0);   //   +90° about X
+    map.updateMatrixWorld();
 
     // 4) --- FIX the orientation: undo the extra 90° ---
     // (comment this line out if you applied library Fix B)
-    map.rotation.set(-Math.PI / 2, 0, 0);   // flat ground
+    map.rotation.set(+Math.PI / 2, 0, 0);   // flat ground
     map.updateMatrixWorld();
 
     // 5) --- Position the map at Doha lat/lon ---
