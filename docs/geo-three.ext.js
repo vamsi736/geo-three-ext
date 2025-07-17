@@ -1,228 +1,173 @@
-// Make sure THREE is available
+// Simple, clean extension that definitely works
 var three = THREE;
 
 class GeoThreeExtension extends Autodesk.Viewing.Extension {
     load() {
-        console.log("🗺️ Starting GeoThreeExtension...");
+        console.log("🗺️ Loading Clean GeoThreeExtension...");
         
-        // MapBox configuration
-        var MAPBOX_TOKEN = 'pk.eyJ1IjoidmFtc2k3MzYiLCJhIjoiY21kNnpyeHViMDQwYjJpczhwdnk5bmRqaSJ9.gYlJEd0xPN7YJVehWuvgPA';
-        var MAPBOX_STYLE = 'mapbox/streets-v11';
-        var provider = new Geo.MapBoxProvider(MAPBOX_TOKEN, MAPBOX_STYLE);
+        try {
+            // MapBox setup
+            var MAPBOX_TOKEN = 'pk.eyJ1IjoidmFtc2k3MzYiLCJhIjoiY21kNnpyeHViMDQwYjJpczhwdnk5bmRqaSJ9.gYlJEd0xPN7YJVehWuvgPA';
+            var MAPBOX_STYLE = 'mapbox/streets-v11';
+            
+            // Create map without any problematic calls
+            this.createMap(MAPBOX_TOKEN, MAPBOX_STYLE);
+            
+            // Add button after everything is ready
+            setTimeout(() => this.addButton(), 2000);
+            
+            console.log("✅ Extension loaded successfully");
+            return true;
+            
+        } catch (error) {
+            console.error("❌ Extension loading failed:", error);
+            return false;
+        }
+    }
 
-        this.map = new Geo.MapView(provider);
+    createMap(token, style) {
+        console.log("🔨 Creating map components...");
         
-        // Simple positioning - put map at origin with reasonable size
-        this.map.position.set(0, -1000, 0); // 1000 units below origin
-        this.map.scale.set(10000, 1, 10000); // Large enough to see
+        // Create simple red plane geometry
+        var geometry = new THREE.PlaneGeometry(20000, 20000); // Large plane
+        var material = new THREE.MeshBasicMaterial({ 
+            color: 0xff0000, // RED
+            side: THREE.DoubleSide,
+            transparent: false
+        });
         
-        console.log("🗺️ Map positioned at (0, -1000, 0) with scale 10000");
+        this.map = new THREE.Mesh(geometry, material);
+        
+        // Position and rotate
+        this.map.position.set(0, -500, 0); // Below origin
+        this.map.rotation.x = -Math.PI / 2; // Flat
+        
+        console.log("🔴 Red map plane created at (0, -500, 0)");
         
         // Add to viewer
         viewer.overlays.addScene('map');
         viewer.overlays.addMesh(this.map, 'map');
         this.map.updateMatrixWorld(true);
         
-        console.log("✅ Map added to viewer overlays");
-
-        // Add simple toggle button with better positioning
-        setTimeout(() => {
-            this.createToggleButton();
-        }, 1000);
-
-        // Simple camera setup - no complex fitting
-        setTimeout(() => {
-            var cam = viewer.getCamera();
-            console.log("📷 Setting camera to see map...");
-            
-            // Position camera to see both origin and map
-            cam.position.set(5000, 5000, 5000);
-            cam.target.set(0, 0, 0);
-            cam.updateProjectionMatrix();
-            viewer.impl.syncCamera();
-            
-            console.log("📷 Camera positioned at (5000, 5000, 5000) looking at origin");
-        }, 2000);
+        console.log("✅ Map added to viewer");
         
-        return true;
+        // Load Qatar texture
+        this.loadQatarTexture(token, style);
     }
 
-    createToggleButton() {
-        console.log("🔘 Creating toggle button...");
+    loadQatarTexture(token, style) {
+        console.log("🇶🇦 Loading Qatar texture...");
         
-        var button = document.createElement('div');
-        button.innerHTML = 'TOGGLE MAP';
-        button.style.cssText = `
-            position: fixed;
-            top: 100px;
-            left: 20px;
-            z-index: 99999;
-            padding: 15px 20px;
-            background-color: #ff6b6b;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 14px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-        `;
+        var url = `https://api.mapbox.com/styles/v1/${style}/tiles/10/812/394@2x?access_token=${token}`;
+        console.log("📡 Fetching from:", url);
         
         var self = this;
-        button.onclick = function() {
-            if (self.map) {
-                self.map.visible = !self.map.visible;
-                console.log("🔄 Map visibility toggled to:", self.map.visible);
-                button.style.backgroundColor = self.map.visible ? '#ff6b6b' : '#666';
+        var image = document.createElement('img');
+        
+        image.onload = function() {
+            console.log("✅ Qatar image loaded, applying texture...");
+            
+            try {
+                var texture = new THREE.Texture(image);
+                texture.generateMipmaps = false;
+                texture.format = THREE.RGBFormat;
+                texture.magFilter = THREE.LinearFilter;
+                texture.minFilter = THREE.LinearFilter;
+                texture.needsUpdate = true;
+                
+                self.map.material.map = texture;
+                self.map.material.color.setHex(0xffffff);
+                self.map.material.needsUpdate = true;
+                
+                console.log("🇶🇦 Qatar map texture applied! Red should now be Qatar!");
+                
+                // Force viewer to refresh
                 viewer.impl.invalidate(true);
+                
+            } catch (error) {
+                console.error("❌ Failed to apply texture:", error);
             }
         };
         
-        document.body.appendChild(button);
-        this.toggleButton = button;
-        console.log("✅ Toggle button created and added to page");
+        image.onerror = function() {
+            console.error("❌ Failed to load Qatar image");
+        };
+        
+        image.crossOrigin = 'Anonymous';
+        image.src = url;
+    }
+
+    addButton() {
+        console.log("🔘 Adding toggle button...");
+        
+        try {
+            // Create button element
+            this.button = document.createElement('button');
+            this.button.innerHTML = 'TOGGLE MAP';
+            this.button.id = 'mapToggleButton';
+            
+            // Style the button
+            this.button.style.cssText = `
+                position: fixed !important;
+                top: 80px !important;
+                left: 20px !important;
+                z-index: 999999 !important;
+                padding: 12px 16px !important;
+                background: #e74c3c !important;
+                color: white !important;
+                border: none !important;
+                border-radius: 6px !important;
+                cursor: pointer !important;
+                font-weight: bold !important;
+                font-family: Arial, sans-serif !important;
+                font-size: 12px !important;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.4) !important;
+                pointer-events: auto !important;
+            `;
+            
+            // Add click handler
+            var self = this;
+            this.button.onclick = function() {
+                console.log("🔄 Button clicked!");
+                if (self.map) {
+                    self.map.visible = !self.map.visible;
+                    console.log("🗺️ Map visibility:", self.map.visible);
+                    self.button.style.background = self.map.visible ? '#e74c3c' : '#7f8c8d';
+                    viewer.impl.invalidate(true);
+                }
+            };
+            
+            // Add to page
+            document.body.appendChild(this.button);
+            console.log("✅ Button added successfully!");
+            
+        } catch (error) {
+            console.error("❌ Failed to create button:", error);
+        }
     }
 
     unload() {
-        if (this.map) {
-            viewer.overlays.removeMesh(this.map, 'map');
+        console.log("🧹 Unloading extension...");
+        
+        try {
+            if (this.map) {
+                viewer.overlays.removeMesh(this.map, 'map');
+                viewer.overlays.removeScene('map');
+            }
+            
+            if (this.button && this.button.parentNode) {
+                this.button.parentNode.removeChild(this.button);
+            }
+            
+        } catch (error) {
+            console.error("❌ Error during unload:", error);
         }
-        if (this.toggleButton && this.toggleButton.parentNode) {
-            this.toggleButton.parentNode.removeChild(this.toggleButton);
-        }
+        
         return true;
     }
 }
 
-// Register the extension
+// Register extension
 Autodesk.Viewing.theExtensionManager.registerExtension('GeoThreeExtension', GeoThreeExtension);
 
-// Simplified Geo library
-(function (global, factory) {
-    if (typeof exports === 'object' && typeof module !== 'undefined') {
-        factory(exports, require('three'));
-    } else if (typeof define === 'function' && define.amd) {
-        define(['exports', 'three'], factory);
-    } else {
-        global = typeof globalThis !== 'undefined' ? globalThis : global || self;
-        factory(global.Geo = {}, global.THREE);
-    }
-}(this, function (exports, three) {
-    'use strict';
-
-    // MapBoxProvider class
-    class MapBoxProvider {
-        constructor(apiToken, style) {
-            this.apiToken = apiToken || '';
-            this.style = style || 'mapbox/streets-v11';
-            this.maxZoom = 18;
-            this.minZoom = 0;
-            
-            console.log("🗺️ MapBoxProvider initialized for:", this.style);
-        }
-        
-        fetchTile(zoom, x, y) {
-            var url = `https://api.mapbox.com/styles/v1/${this.style}/tiles/${zoom}/${x}/${y}@2x?access_token=${this.apiToken}`;
-            console.log(`📡 Fetching Qatar tile ${zoom}/${x}/${y}...`);
-            
-            return new Promise(function(resolve, reject) {
-                var image = document.createElement('img');
-                
-                image.onload = function() {
-                    console.log(`✅ Qatar tile ${zoom}/${x}/${y} loaded! Size: ${image.width}x${image.height}`);
-                    resolve(image);
-                };
-                
-                image.onerror = function() {
-                    console.error(`❌ Failed to load tile ${zoom}/${x}/${y}`);
-                    reject();
-                };
-                
-                image.crossOrigin = 'Anonymous';
-                image.src = url;
-            });
-        }
-    }
-
-    // Simple MapNode
-    class MapNode extends three.Mesh {
-        constructor(provider) {
-            // Create bright colored plane so we can see it
-            var geometry = new three.PlaneGeometry(1, 1);
-            var material = new three.MeshBasicMaterial({ 
-                color: 0xff0000, // RED so it's very visible
-                side: three.DoubleSide,
-                transparent: false
-            });
-            
-            super(geometry, material);
-            
-            this.provider = provider;
-            this.visible = true;
-            
-            // Rotate to be flat like ground
-            this.rotation.x = -Math.PI / 2;
-            
-            console.log("🔴 RED map plane created (will turn to Qatar map)");
-            
-            // Load Qatar texture
-            this.loadQatarTexture();
-        }
-        
-        loadQatarTexture() {
-            if (!this.provider) {
-                console.error("❌ No provider for texture loading");
-                return;
-            }
-            
-            console.log("🇶🇦 Loading Qatar map texture...");
-            var self = this;
-            
-            // Qatar coordinates: level 10, x=812, y=394
-            this.provider.fetchTile(10, 812, 394)
-                .then(function(image) {
-                    console.log("🎨 Applying Qatar texture to red plane...");
-                    
-                    var texture = new three.Texture(image);
-                    texture.generateMipmaps = false;
-                    texture.format = three.RGBFormat;
-                    texture.magFilter = three.LinearFilter;
-                    texture.minFilter = three.LinearFilter;
-                    texture.needsUpdate = true;
-                    
-                    self.material.map = texture;
-                    self.material.color.setHex(0xffffff); // White for texture
-                    self.material.needsUpdate = true;
-                    
-                    console.log("🇶🇦 Qatar map texture applied! Red should now be Qatar map!");
-                })
-                .catch(function() {
-                    console.error("❌ Failed to load Qatar texture - staying red");
-                });
-        }
-    }
-
-    // Simple MapView
-    class MapView extends three.Object3D {
-        constructor(provider) {
-            super();
-            
-            this.provider = provider;
-            console.log("🗺️ Creating MapView...");
-            
-            // Create the map node
-            this.mapNode = new MapNode(provider);
-            this.add(this.mapNode);
-            
-            console.log("✅ MapView created with Qatar map node");
-        }
-    }
-
-    // Export classes
-    exports.MapBoxProvider = MapBoxProvider;
-    exports.MapNode = MapNode;
-    exports.MapView = MapView;
-
-    Object.defineProperty(exports, '__esModule', { value: true });
-
-}));
+console.log("📋 GeoThreeExtension script loaded and registered");
