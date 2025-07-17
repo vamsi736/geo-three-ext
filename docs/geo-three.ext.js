@@ -8,6 +8,13 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
     var provider = new Geo.MapBoxProvider(MAPBOX_TOKEN, MAPBOX_STYLE, Geo.MapBoxProvider.STYLE);
 
     var map = new Geo.MapView(Geo.MapView.PLANAR, provider);
+
+	// ✅ Replace default root node with one for Doha
+    var level = 7;
+    var tileX = 82;
+    var tileY = 54;
+    var dohaRoot = new Geo.MapPlaneNode(null, map, Geo.MapNode.ROOT, level, tileX, tileY);
+    map.setRoot(dohaRoot);  // ✅ This line replaces the "library root node"
     
     let coords = Geo.UnitsUtils.datumsToSpherical(25.276987, 51.520008); // Doha
     map.position.set(coords.x, 0, -coords.y);
