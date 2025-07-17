@@ -10,18 +10,25 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
         var MAPBOX_STYLE = 'mapbox/streets-v11';
         var provider = new Geo.MapBoxProvider(MAPBOX_TOKEN, MAPBOX_STYLE, Geo.MapBoxProvider.STYLE);
 
-        // FIXED: Properly declare this.map
         this.map = new Geo.MapView(Geo.MapView.PLANAR, provider);
         
-        // Qatar coordinates
-        var dohaLat = 25.276987;
-        var dohaLon = 51.520008;
-        var coords = Geo.UnitsUtils.datumsToSpherical(dohaLat, dohaLon);
+        // Get model bounds to position map correctly
+        var modelBounds = viewer.model.getBoundingBox();
+        var modelCenter = modelBounds.center();
+        var modelSize = modelBounds.getSize();
         
-        console.log("📍 Qatar coordinates:", coords);
+        console.log("📦 Model center:", modelCenter);
+        console.log("📏 Model size:", modelSize);
         
-        // Position map at origin first to test
-        this.map.position.set(0, 0, 0);
+        // Position map at model's ground level
+        this.map.position.set(modelCenter.x, modelBounds.min.y - 10, modelCenter.z);
+        
+        // Scale map to be reasonable size relative to model
+        var mapScale = Math.max(modelSize.x, modelSize.z) * 2;
+        this.map.scale.set(mapScale, 1, mapScale);
+        
+        console.log("🗺️ Map positioned at:", this.map.position);
+        console.log("📐 Map scaled to:", mapScale);
         
         // Add to viewer
         viewer.overlays.addScene('map');
@@ -30,12 +37,29 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
         
         console.log("✅ Map added to viewer");
 
+        // Get current camera for reference
+        var cam = viewer.getCamera();
+        console.log("📷 Current camera position:", cam.position);
+        console.log("🎯 Current camera target:", cam.target);
+        
+        // Set camera to see both model and map
+        setTimeout(function() {
+            // Move camera to see the map and model together
+            var distance = Math.max(modelSize.x, modelSize.y, modelSize.z) * 3;
+            cam.position.set(
+                modelCenter.x + distance, 
+                modelCenter.y + distance, 
+                modelCenter.z + distance
+            );
+            cam.target.copy(modelCenter);
+            cam.updateProjectionMatrix();
+            viewer.impl.syncCamera();
+            console.log("📷 Camera repositioned to see map and model");
+        }, 1000);
+
         // Camera setup
         viewer.autocam.shotParams.destinationPercent = 3;
         viewer.autocam.shotParams.duration = 3;
-        
-        var cam = viewer.getCamera();
-        console.log("📷 Camera ready");
         
         // Event listener for camera changes
         var self = this;
@@ -60,7 +84,7 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
 // Register the extension
 Autodesk.Viewing.theExtensionManager.registerExtension('GeoThreeExtension', GeoThreeExtension);
 
-// Create the Geo library with proper structure
+// Create the Geo library
 (function (global, factory) {
     if (typeof exports === 'object' && typeof module !== 'undefined') {
         factory(exports, require('three'));
@@ -123,7 +147,7 @@ Autodesk.Viewing.theExtensionManager.registerExtension('GeoThreeExtension', GeoT
         }
     }
 
-    // Simple MapNode class
+    // MapNode class
     class MapNode extends three.Mesh {
         constructor(parentNode, mapView, location, level, x, y, geometry, material) {
             super(geometry, material);
@@ -161,16 +185,17 @@ Autodesk.Viewing.theExtensionManager.registerExtension('GeoThreeExtension', GeoT
                     texture.minFilter = three.LinearFilter;
                     texture.needsUpdate = true;
                     self.material.map = texture;
+                    self.material.color.setHex(0xffffff); // Make sure color is white for texture
                     self.material.needsUpdate = true;
-                    console.log('✅ Texture applied');
+                    console.log('✅ Texture applied to map');
                 })
                 .catch(function() {
-                    console.error('❌ Texture loading failed');
+                    console.error('❌ Texture loading failed - keeping green color');
                 });
         }
     }
 
-    // Simple LOD class
+    // LOD class
     class LODRaycast {
         constructor() {
             this.raycaster = new three.Raycaster();
@@ -200,13 +225,13 @@ Autodesk.Viewing.theExtensionManager.registerExtension('GeoThreeExtension', GeoT
         setRoot(root) {
             console.log('🌳 Setting up root node');
             
-            // Create simple plane geometry
-            var geometry = new three.PlaneGeometry(1000000, 1000000, 1, 1);
+            // Create plane geometry that will be visible
+            var geometry = new three.PlaneGeometry(1, 1, 1, 1);
             var material = new three.MeshBasicMaterial({ 
-                color: 0x00ff00,
+                color: 0x00ff00, // Start green, will turn white when texture loads
                 side: three.DoubleSide,
-                transparent: true,
-                opacity: 0.8
+                transparent: false,
+                wireframe: false
             });
             
             if (this.root !== null) {
@@ -214,14 +239,17 @@ Autodesk.Viewing.theExtensionManager.registerExtension('GeoThreeExtension', GeoT
                 this.root = null;
             }
             
-            // Create root node for Qatar (level 10, x=812, y=394)
+            // Create root node for Qatar
             this.root = new MapNode(null, this, -1, 10, 812, 394, geometry, material);
             
             if (this.root !== null) {
+                // Rotate to lay flat (like ground)
+                this.root.rotation.x = -Math.PI / 2;
+                
                 this.geometry = this.root.geometry;
                 this.root.mapView = this;
                 this.add(this.root);
-                console.log('✅ Root node added');
+                console.log('✅ Root node added and rotated flat');
             }
         }
         
