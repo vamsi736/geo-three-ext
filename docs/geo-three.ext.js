@@ -31,7 +31,13 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
          3)  Move the map horizontally to Doha lat/lon
         -------------------------------------------------------------*/
         const coords = Geo.UnitsUtils.datumsToSpherical(25.276987, 51.520008);
-        map.position.set(coords.x, 0, -coords.y);
+
+	// Manual offset in meters (positive = east/north, negative = west/south)
+	const offsetX = -200; // Move map west by 200m
+	const offsetZ = 150;  // Move map north by 150m
+
+	map.position.set(coords.x + offsetX, 0, -coords.y + offsetZ);
+       
 
         /*-------------------------------------------------------------
          4)  Add the map into Forge overlay
