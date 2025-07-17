@@ -2,37 +2,63 @@ three = THREE;
 
 
 class GeoThreeExtension extends Autodesk.Viewing.Extension {
-    load() {
-    var MAPBOX_TOKEN = "pk.eyJ1IjoidmFtc2k3MzYiLCJhIjoiY21kNnpyeHViMDQwYjJpczhwdnk5bmRqaSJ9.gYlJEd0xPN7YJVehWuvgPA";
-    var MAPBOX_STYLE = "mapbox/streets-v11";
-    var provider = new Geo.MapBoxProvider(MAPBOX_TOKEN, MAPBOX_STYLE, Geo.MapBoxProvider.STYLE);
+    load () {
 
-    var map = new Geo.MapView(Geo.MapView.PLANAR, provider);
+    // 1) --- Mapbox provider ---
+    const MAPBOX_TOKEN = "pk.eyJ1IjoidmFtc2k3MzYiLCJhIjoiY21kNnpyeHViMDQwYjJpczhwdnk5bmRqaSJ9.gYlJEd0xPN7YJVehWuvgPA";
+    const MAPBOX_STYLE = "mapbox/streets-v11";            // try satellite-v9, etc.
+    const provider     = new Geo.MapBoxProvider(
+                            MAPBOX_TOKEN,
+                            MAPBOX_STYLE,
+                            Geo.MapBoxProvider.STYLE
+                         );
 
-	// ✅ Replace default root node with one for Doha
-    var level = 7;
-    var tileX = 82;
-    var tileY = 54;
-    var dohaRoot = new Geo.MapPlaneNode(null, map, Geo.MapNode.ROOT, level, tileX, tileY);
-    map.setRoot(dohaRoot);  // ✅ This line replaces the "library root node"
-    
-    let coords = Geo.UnitsUtils.datumsToSpherical(25.276987, 51.520008); // Doha
+    // 2) --- MapView container ---
+    const map = new Geo.MapView(Geo.MapView.PLANAR, provider);
+
+    // 3) --- Replace default root with Doha tile ---
+    const level  = 7;
+    const tileX  = 82;   // Doha @ z 7
+    const tileY  = 54;
+    const dohaRoot = new Geo.MapPlaneNode(
+                        null, map,
+                        Geo.MapNode.ROOT,
+                        level, tileX, tileY
+                      );
+
+    // IMPORTANT: this will *also* rotate the map once by +90° about X
+    map.setRoot(dohaRoot);
+
+    // 4) --- FIX the orientation: undo the extra 90° ---
+    // (comment this line out if you applied library Fix B)
+    map.rotation.set(-Math.PI / 2, 0, 0);   // flat ground
+    map.updateMatrixWorld();
+
+    // 5) --- Position the map at Doha lat/lon ---
+    const coords = Geo.UnitsUtils.datumsToSpherical(25.276987, 51.520008);
     map.position.set(coords.x, 0, -coords.y);
 
+    // 6) --- Add map overlay to Viewer ---
     viewer.overlays.addScene('map');
     viewer.overlays.addMesh(map, 'map');
     map.updateMatrixWorld(false);
 
+    // 7) --- Camera helper ---
     viewer.autocam.shotParams.destinationPercent = 3;
-    viewer.autocam.shotParams.duration = 3;
+    viewer.autocam.shotParams.duration           = 3;
 
-    var cam = viewer.getCamera();
-    cam.target.set(coords.x, 0, -coords.y);
-    cam.position.set(coords.x, 1000, -coords.y); // height
+    const cam = viewer.getCamera();
+    cam.target  .set(coords.x, 0, -coords.y);
+    cam.position.set(coords.x, 1000, -coords.y);   // height above Doha
 
     viewer.addEventListener(Autodesk.Viewing.CAMERA_CHANGE_EVENT, () => {
         viewer.autocam.toPerspective();
-        map.lod.updateLOD(map, cam, viewer.impl.glrenderer(), viewer.overlays.impl.overlayScenes.map.scene, viewer.impl);
+        map.lod.updateLOD(
+            map, cam,
+            viewer.impl.glrenderer(),
+            viewer.overlays.impl.overlayScenes.map.scene,
+            viewer.impl
+        );
     });
 
     return true;
