@@ -8,9 +8,9 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
 	var MAPBOX_STYLE = 'mapbox/streets-v11';
 	var provider = new Geo.MapBoxProvider(MAPBOX_TOKEN, MAPBOX_STYLE, Geo.MapBoxProvider.STYLE);
 
-        var map = new Geo.MapView(Geo.MapView.PLANAR, provider);
+        this map = new Geo.MapView(Geo.MapView.PLANAR, provider);
         const coords = Geo.UnitsUtils.datumsToSpherical(25.276987, 51.520008); // Coordinates for Doha
-	map.position.set(coords.x , 0, -coords.y );
+	map.position.set(coords.x , -45, -coords.y );
         viewer.overlays.addScene('map');
         viewer.overlays.addMesh(map, 'map');
         map.updateMatrixWorld(false);
@@ -31,6 +31,7 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
     }
 
     unload() {
+	viewer.overlays.removeMesh(this.map, 'map');
         return true;
     }
 }
