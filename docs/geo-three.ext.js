@@ -9,7 +9,8 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
 	var provider = new Geo.MapBoxProvider(MAPBOX_TOKEN, MAPBOX_STYLE, Geo.MapBoxProvider.STYLE);
 
         var map = new Geo.MapView(Geo.MapView.PLANAR, provider);
-        map.position.set(14900,-27300,-45);
+        const coords = Geo.UnitsUtils.datumsToSpherical(25.276987, 51.520008); // Coordinates for Doha
+	map.position.set(coords.x, 0, -coords.y);
         viewer.overlays.addScene('map');
         viewer.overlays.addMesh(map, 'map');
         map.updateMatrixWorld(false);
