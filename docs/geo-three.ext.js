@@ -20,7 +20,7 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
         var cam = viewer.getCamera();
 
         //var coords = Geo.UnitsUtils.datumsToSpherical(40.940119, -8.535589);
-        //cam.target.set(coords.x, 0, -coords.y);
+        //cam.target.set(coords.x, 100000, -coords.y);
         //cam.position.set(0, 1000, 0);
 
         viewer.addEventListener(Autodesk.Viewing.CAMERA_CHANGE_EVENT, () => {
