@@ -290,7 +290,7 @@ Autodesk.Viewing.theExtensionManager.registerExtension('GeoThreeExtension', GeoT
 	UnitsUtils.EARTH_ORIGIN = UnitsUtils.EARTH_PERIMETER / 2.0;
 
 	class MapPlaneNode extends MapNode {
-	    constructor(parentNode = null, mapView = null, location = MapNode.ROOT, level = 7, x = 82, y = 54) { // SanFrancisco level = 7, x = 20, y = 49
+	    constructor(parentNode = null, mapView = null, location = MapNode.ROOT, level = 12, x = 2705, y = 1805) { // Doha level = 7, x = 82, y = 52
 	        super(parentNode, mapView, location, level, x, y, MapPlaneNode.GEOMETRY, new three.MeshBasicMaterial({ disableEnvMap:true, depthTest:true, depthWrite:false,  side: three.DoubleSide, transparent:false, wireframe: false }));
 	        this.matrixAutoUpdate = false;
 	        this.isMesh = true;
