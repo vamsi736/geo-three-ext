@@ -2,8 +2,7 @@
 
 Add maps to your Forge Viewer 3D scene, like mapbox, bing maps, google maps, etc.  This uses [geo-three library](https://github.com/tentone/geo-three), but is hard coded for 'Planar' and 'RaycastingLOD' options, to minimize the library size.
 
-### DEMO: https://wallabyway.github.io/geo-three-ext/
-
+### DEMO: https://vamsi736.github.io/geo-three-ext/
 ![geothree-ext](https://user-images.githubusercontent.com/440241/122155016-f92ed680-ce1a-11eb-8e92-f797e043f66e.gif)
 
 
