@@ -4,8 +4,9 @@ three = THREE;
 class GeoThreeExtension extends Autodesk.Viewing.Extension {
     load() {
         //var provider = new Geo.DebugProvider();
-        var DEV_BING_API_KEY = "AuViYD_FXGfc3dxc0pNa8ZEJxyZyPq1lwOLPCOydV3f0tlEVH-HKMgxZ9ilcRj-T";
-        var provider = new Geo.BingMapsProvider(DEV_BING_API_KEY, Geo.BingMapsProvider.ROAD)
+        var MAPBOX_TOKEN = 'pk.eyJ1IjoidmFtc2k3MzYiLCJhIjoiY21kNnpyeHViMDQwYjJpczhwdnk5bmRqaSJ9.gYlJEd0xPN7YJVehWuvgPA';
+	var MAPBOX_STYLE = 'mapbox/streets-v11';
+	var provider = new Geo.MapBoxProvider(MAPBOX_TOKEN, MAPBOX_STYLE, Geo.MapBoxProvider.STYLE);
 
         var map = new Geo.MapView(Geo.MapView.PLANAR, provider);
         map.position.set(14900,-27300,-45);
