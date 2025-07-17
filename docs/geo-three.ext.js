@@ -19,12 +19,15 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
         
         console.log("📦 Model center:", modelCenter);
         console.log("📏 Model size:", modelSize);
+        console.log("🔽 Model min Y (bottom):", modelBounds.min.y);
+        console.log("🔼 Model max Y (top):", modelBounds.max.y);
         
-        // Position map at model's ground level
-        this.map.position.set(modelCenter.x, modelBounds.min.y - 10, modelCenter.z);
+        // Position map BELOW the model (so model sits ON TOP of map)
+        var mapY = modelBounds.min.y - 50; // Put map 50 units below model bottom
+        this.map.position.set(modelCenter.x, mapY, modelCenter.z);
         
-        // Scale map to be reasonable size relative to model
-        var mapScale = Math.max(modelSize.x, modelSize.z) * 2;
+        // Scale map to be larger than model
+        var mapScale = Math.max(modelSize.x, modelSize.z) * 3;
         this.map.scale.set(mapScale, 1, mapScale);
         
         console.log("🗺️ Map positioned at:", this.map.position);
@@ -37,25 +40,11 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
         
         console.log("✅ Map added to viewer");
 
-        // Get current camera for reference
-        var cam = viewer.getCamera();
-        console.log("📷 Current camera position:", cam.position);
-        console.log("🎯 Current camera target:", cam.target);
-        
-        // Set camera to see both model and map
+        // Force camera to see the scene properly
         setTimeout(function() {
-            // Move camera to see the map and model together
-            var distance = Math.max(modelSize.x, modelSize.y, modelSize.z) * 3;
-            cam.position.set(
-                modelCenter.x + distance, 
-                modelCenter.y + distance, 
-                modelCenter.z + distance
-            );
-            cam.target.copy(modelCenter);
-            cam.updateProjectionMatrix();
-            viewer.impl.syncCamera();
-            console.log("📷 Camera repositioned to see map and model");
-        }, 1000);
+            viewer.fitToView();
+            console.log("📷 Camera fitted to view");
+        }, 2000);
 
         // Camera setup
         viewer.autocam.shotParams.destinationPercent = 3;
@@ -69,13 +58,42 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
                 self.map.lod.updateLOD(self.map, cam, viewer.impl.glrenderer(), viewer.overlays.impl.overlayScenes.map.scene, viewer.impl);
             }
         });
+
+        // Add button to toggle map visibility for testing
+        this.createMapToggleButton();
         
         return true;
+    }
+
+    createMapToggleButton() {
+        var self = this;
+        var button = document.createElement('button');
+        button.innerHTML = 'Toggle Map';
+        button.style.position = 'absolute';
+        button.style.top = '70px';
+        button.style.left = '10px';
+        button.style.zIndex = '1000';
+        button.style.padding = '10px';
+        button.style.backgroundColor = '#007bff';
+        button.style.color = 'white';
+        button.style.border = 'none';
+        button.style.borderRadius = '5px';
+        
+        button.onclick = function() {
+            self.map.visible = !self.map.visible;
+            console.log("🔄 Map visibility:", self.map.visible);
+        };
+        
+        document.body.appendChild(button);
+        this.toggleButton = button;
     }
 
     unload() {
         if (this.map) {
             viewer.overlays.removeMesh(this.map, 'map');
+        }
+        if (this.toggleButton) {
+            document.body.removeChild(this.toggleButton);
         }
         return true;
     }
@@ -108,7 +126,7 @@ Autodesk.Viewing.theExtensionManager.registerExtension('GeoThreeExtension', GeoT
         }
     }
 
-    // MapBoxProvider class
+    // MapBoxProvider class with better debugging
     class MapBoxProvider {
         constructor(apiToken, id, mode, format, useHDPI, version) {
             this.apiToken = apiToken || '';
@@ -121,24 +139,28 @@ Autodesk.Viewing.theExtensionManager.registerExtension('GeoThreeExtension', GeoT
             this.maxZoom = 18;
             this.minZoom = 0;
             
-            console.log("🗺️ MapBoxProvider created");
+            console.log("🗺️ MapBoxProvider created with style:", this.style);
         }
         
         fetchTile(zoom, x, y) {
-            var url = 'https://api.mapbox.com/styles/v1/' + this.style + '/tiles/' + zoom + '/' + x + '/' + y + '?access_token=' + this.apiToken;
-            console.log('📡 Fetching tile:', zoom, x, y);
+            // Use a simpler URL format that works better
+            var url = 'https://api.mapbox.com/styles/v1/' + this.style + '/tiles/' + zoom + '/' + x + '/' + y + '@2x?access_token=' + this.apiToken;
+            console.log('📡 Fetching tile from URL:', url);
             
             return new Promise(function(resolve, reject) {
                 var image = document.createElement('img');
                 
                 image.onload = function() {
-                    console.log('✅ Tile loaded:', zoom, x, y);
+                    console.log('✅ Tile loaded successfully:', zoom, x, y);
+                    console.log('🖼️ Image dimensions:', image.width, 'x', image.height);
                     resolve(image);
                 };
                 
-                image.onerror = function() {
+                image.onerror = function(error) {
                     console.error('❌ Failed to load tile:', zoom, x, y);
-                    reject();
+                    console.error('🔗 Failed URL:', url);
+                    console.error('📄 Error details:', error);
+                    reject(error);
                 };
                 
                 image.crossOrigin = 'Anonymous';
@@ -147,7 +169,7 @@ Autodesk.Viewing.theExtensionManager.registerExtension('GeoThreeExtension', GeoT
         }
     }
 
-    // MapNode class
+    // MapNode class with better texture handling
     class MapNode extends three.Mesh {
         constructor(parentNode, mapView, location, level, x, y, geometry, material) {
             super(geometry, material);
@@ -160,37 +182,49 @@ Autodesk.Viewing.theExtensionManager.registerExtension('GeoThreeExtension', GeoT
             this.isMesh = true;
             this.visible = true;
             
-            console.log('🔲 MapNode created:', this.level, this.x, this.y);
+            console.log('🔲 MapNode created for Qatar tile:', this.level, this.x, this.y);
             
             this.initialize();
         }
         
         initialize() {
-            this.loadTexture();
+            // Give it a moment before loading texture
+            var self = this;
+            setTimeout(function() {
+                self.loadTexture();
+            }, 500);
         }
         
         loadTexture() {
             if (!this.mapView || !this.mapView.provider) {
-                console.error('❌ No provider available');
+                console.error('❌ No provider available for texture loading');
                 return;
             }
             
+            console.log('🔄 Starting texture load for Qatar...');
             var self = this;
+            
             this.mapView.provider.fetchTile(this.level, this.x, this.y)
                 .then(function(image) {
+                    console.log('🎨 Creating texture from loaded image...');
                     var texture = new three.Texture(image);
                     texture.generateMipmaps = false;
                     texture.format = three.RGBFormat;
                     texture.magFilter = three.LinearFilter;
                     texture.minFilter = three.LinearFilter;
                     texture.needsUpdate = true;
+                    
+                    // Apply texture and change color to white
                     self.material.map = texture;
-                    self.material.color.setHex(0xffffff); // Make sure color is white for texture
+                    self.material.color.setHex(0xffffff);
                     self.material.needsUpdate = true;
-                    console.log('✅ Texture applied to map');
+                    
+                    console.log('✅ Qatar map texture successfully applied!');
+                    console.log('🗺️ You should now see Qatar map instead of green');
                 })
-                .catch(function() {
+                .catch(function(error) {
                     console.error('❌ Texture loading failed - keeping green color');
+                    console.error('🔍 Error details:', error);
                 });
         }
     }
@@ -203,7 +237,6 @@ Autodesk.Viewing.theExtensionManager.registerExtension('GeoThreeExtension', GeoT
         }
         
         updateLOD(view, camera, renderer, scene, viewerImpl) {
-            // Simple LOD - just return for now
             return;
         }
     }
@@ -223,12 +256,12 @@ Autodesk.Viewing.theExtensionManager.registerExtension('GeoThreeExtension', GeoT
         }
         
         setRoot(root) {
-            console.log('🌳 Setting up root node');
+            console.log('🌳 Setting up Qatar map root node...');
             
-            // Create plane geometry that will be visible
+            // Create a larger plane geometry
             var geometry = new three.PlaneGeometry(1, 1, 1, 1);
             var material = new three.MeshBasicMaterial({ 
-                color: 0x00ff00, // Start green, will turn white when texture loads
+                color: 0x00ff00, // Start green
                 side: three.DoubleSide,
                 transparent: false,
                 wireframe: false
@@ -239,17 +272,17 @@ Autodesk.Viewing.theExtensionManager.registerExtension('GeoThreeExtension', GeoT
                 this.root = null;
             }
             
-            // Create root node for Qatar
+            // Create root node for Qatar with correct coordinates
             this.root = new MapNode(null, this, -1, 10, 812, 394, geometry, material);
             
             if (this.root !== null) {
-                // Rotate to lay flat (like ground)
+                // Rotate to lay flat like ground
                 this.root.rotation.x = -Math.PI / 2;
                 
                 this.geometry = this.root.geometry;
                 this.root.mapView = this;
                 this.add(this.root);
-                console.log('✅ Root node added and rotated flat');
+                console.log('✅ Qatar map root node created and positioned');
             }
         }
         
