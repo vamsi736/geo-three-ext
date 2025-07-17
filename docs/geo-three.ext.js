@@ -54,6 +54,14 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
     cam.target  .set(coords.x, 0, -coords.y);
     cam.position.set(coords.x, 1000, -coords.y);   // height above Doha
 
+    // 5) ---- DROP the map onto model ground (Z-axis alignment) --------
+    function alignMapHeightOnce () {
+        const bbox        = viewer.model.getBoundingBox();   // model extents
+        const modelBottom = bbox.min.z;                      // lowest Z
+        map.position.z    = modelBottom - 0.01;              // 1 cm below
+        map.updateMatrixWorld();
+    }
+
     viewer.addEventListener(Autodesk.Viewing.CAMERA_CHANGE_EVENT, () => {
         viewer.autocam.toPerspective();
         map.lod.updateLOD(
