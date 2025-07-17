@@ -3,31 +3,33 @@ three = THREE;
 
 class GeoThreeExtension extends Autodesk.Viewing.Extension {
     load() {
-        //var provider = new Geo.DebugProvider();
-        var DEV_BING_API_KEY = "AuViYD_FXGfc3dxc0pNa8ZEJxyZyPq1lwOLPCOydV3f0tlEVH-HKMgxZ9ilcRj-T";
-        var provider = new Geo.BingMapsProvider(DEV_BING_API_KEY, Geo.BingMapsProvider.ROAD)
+    var MAPBOX_TOKEN = "pk.eyJ1IjoidmFtc2k3MzYiLCJhIjoiY21kNnpyeHViMDQwYjJpczhwdnk5bmRqaSJ9.gYlJEd0xPN7YJVehWuvgPA";
+    var MAPBOX_STYLE = "mapbox/streets-v11";
+    var provider = new Geo.MapBoxProvider(MAPBOX_TOKEN, MAPBOX_STYLE, Geo.MapBoxProvider.STYLE);
 
-        var map = new Geo.MapView(Geo.MapView.PLANAR, provider);
-        map.position.set(14900,-27300,-45);
-        viewer.overlays.addScene('map');
-        viewer.overlays.addMesh(map, 'map');
-        map.updateMatrixWorld(false);
+    var map = new Geo.MapView(Geo.MapView.PLANAR, provider);
+    
+    let coords = Geo.UnitsUtils.datumsToSpherical(25.276987, 51.520008); // Doha
+    map.position.set(coords.x, 0, -coords.y);
 
-		viewer.autocam.shotParams.destinationPercent=3;
-		viewer.autocam.shotParams.duration = 3;
-        var cam = viewer.getCamera();
+    viewer.overlays.addScene('map');
+    viewer.overlays.addMesh(map, 'map');
+    map.updateMatrixWorld(false);
 
-        //var coords = Geo.UnitsUtils.datumsToSpherical(40.940119, -8.535589);
-        //cam.target.set(coords.x, 0, -coords.y);
-        //cam.position.set(0, 1000, 0);
+    viewer.autocam.shotParams.destinationPercent = 3;
+    viewer.autocam.shotParams.duration = 3;
 
-        viewer.addEventListener(Autodesk.Viewing.CAMERA_CHANGE_EVENT, () => {
-	        viewer.autocam.toPerspective();
-            map.lod.updateLOD(map, cam, viewer.impl.glrenderer(), viewer.overlays.impl.overlayScenes.map.scene, viewer.impl);
-        });
-        return true;
-    }
+    var cam = viewer.getCamera();
+    cam.target.set(coords.x, 0, -coords.y);
+    cam.position.set(coords.x, 1000, -coords.y); // height
 
+    viewer.addEventListener(Autodesk.Viewing.CAMERA_CHANGE_EVENT, () => {
+        viewer.autocam.toPerspective();
+        map.lod.updateLOD(map, cam, viewer.impl.glrenderer(), viewer.overlays.impl.overlayScenes.map.scene, viewer.impl);
+    });
+
+    return true;
+}
     unload() {
         return true;
     }
