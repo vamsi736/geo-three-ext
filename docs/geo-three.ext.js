@@ -68,8 +68,8 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
 	        null, map, Geo.MapNode.ROOT,
 	        level,
 	        centerX + dx,   // quadtree-X of this tile
-	        centerY + dy)   // quadtree-Y of this tile
-	        );              
+	        centerY + dy);   // quadtree-Y of this tile
+	                      
 	
 	    /* place the tile on our big ground plane */
 	    tile.scale.set(tileSize, 1, tileSize);
