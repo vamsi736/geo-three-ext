@@ -74,6 +74,7 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
 	    /* place the tile on our big ground plane */
 	    tile.scale.set(tileSize, 1, tileSize);
 	    tile.position.set(dx * tileSize, 0, -dy * tileSize);
+	    tile.updateMatrix(); 
 	    tile.updateMatrixWorld();
 	
 	    map.add(tile);
