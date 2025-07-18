@@ -24,6 +24,9 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
 	if (map.root) {
 	    map.remove(map.root);   // get it out of the scenegraph
 	    map.root = null;        // so LOD code won’t touch it
+
+	    map.scale.set(1, 1, 1);   // no 40 000 km scale
+  	    map.geometry = null;      // don’t render that invisible root mesh
 	}
 	/*-------------------------------------------------------------
 	  2)  Place and rotate the map flat
@@ -65,10 +68,11 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
 	        null, map, Geo.MapNode.ROOT,
 	        level,
 	        centerX + dx,   // quadtree-X of this tile
-	        centerY + dy);  // quadtree-Y of this tile
-	                      
+	        centerY + dy)   // quadtree-Y of this tile
+	        );              
 	
 	    /* place the tile on our big ground plane */
+	    tile.scale.set(tileSize, 1, tileSize);
 	    tile.position.set(dx * tileSize, 0, -dy * tileSize);
 	    tile.updateMatrixWorld();
 	
