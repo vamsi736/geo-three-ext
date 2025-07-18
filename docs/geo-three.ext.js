@@ -14,36 +14,51 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
                                 MAPBOX_STYLE,
                                 Geo.MapBoxProvider.STYLE);
 
+        
         /*-------------------------------------------------------------
-         1)  Create the map (the library will auto-create a root tile)
-             – we already set that tile to Doha by changing the
-               MapPlaneNode *defaults* (x = 82, y = 54, level = 7)
-        -------------------------------------------------------------*/
-        const map = new Geo.MapView(Geo.MapView.PLANAR, provider);
+	  1)  Create MapView (empty container)
+	-------------------------------------------------------------*/
+	const map = new Geo.MapView(Geo.MapView.PLANAR, provider);
+	
+	/*-------------------------------------------------------------
+	  2)  Place and rotate the map flat
+	-------------------------------------------------------------*/
+	map.rotation.set(Math.PI / 2, 0, 0);
+	map.updateMatrixWorld();
+	
+	/*-------------------------------------------------------------
+	  3)  Create 3×3 tiles centered on Doha at zoom level 8
+	-------------------------------------------------------------*/
+	const level = 8;
+	const centerLat = 25.276987;
+	const centerLon = 51.520008;
+	
+	// Convert Doha lat/lon to tile X/Y for level 8
+	const centerCoords = Geo.UnitsUtils.datumsToSpherical(centerLat, centerLon);
+	const numTiles = Math.pow(2, level);
+	const centerX = Math.floor((centerLon + 180) / 360 * numTiles);
+	const centerY = Math.floor((1 - Math.log(Math.tan(centerLat * Math.PI / 180) + 1 / Math.cos(centerLat * Math.PI / 180)) / Math.PI) / 2 * numTiles);
 
-        /*-------------------------------------------------------------
-         2)  Make the map lie flat (+90° about X exactly once)
-        -------------------------------------------------------------*/
-        map.rotation.set(Math.PI / 2, 0, 0);
-        map.updateMatrixWorld();
-
-        /*-------------------------------------------------------------
-         3)  Move the map horizontally to Doha lat/lon
-        -------------------------------------------------------------*/
-        const coords = Geo.UnitsUtils.datumsToSpherical(25.276987, 51.520008);
-
-	// Manual offset in meters (positive = east/north, negative = west/south)
-	const offsetX = 20000; // Move map west by 200m
-	const offsetZ = 150;  // Move map north by 150m
-
-	map.position.set(coords.x + offsetX, 0, -coords.y + offsetZ);
-       
-
-        /*-------------------------------------------------------------
-         4)  Add the map into Forge overlay
-        -------------------------------------------------------------*/
-        viewer.overlays.addScene('map');
-        viewer.overlays.addMesh(map, 'map');
+	
+	// Size of one tile in meters
+	const tileSize = Geo.UnitsUtils.EARTH_PERIMETER / Math.pow(2, level);
+	
+	for (let dx = -1; dx <= 1; dx++) {
+	    for (let dy = -1; dy <= 1; dy++) {
+	        const tileX = centerX + dx;
+	        const tileY = centerY + dy;
+	
+	        const tile = new Geo.MapPlaneNode(null, map, Geo.MapNode.ROOT, level, tileX, tileY);
+	
+	        tile.position.set(dx * tileSize, 0, -dy * tileSize);
+	        tile.updateMatrixWorld();
+	
+	        map.add(tile);
+	    }
+	}
+	
+	// Move the whole map to center on Doha
+	map.position.set(centerCoords.x, 0, -centerCoords.y);
 
         /*-------------------------------------------------------------
          5)  Drop the map so it touches the bottom of the model
@@ -68,8 +83,8 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
         viewer.autocam.shotParams.duration           = 3;
 
         const cam = viewer.getCamera();
-        cam.target  .set(coords.x, 0, -coords.y);
-        cam.position.set(coords.x, 1000, -coords.y);
+        cam.target.set(centerCoords.x, 0, -centerCoords.y);
+	cam.position.set(centerCoords.x, 1000, -centerCoords.y);
 
         /*-------------------------------------------------------------
          7)  Keep map LOD updating as you orbit
