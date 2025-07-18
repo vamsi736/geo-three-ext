@@ -65,7 +65,8 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
 	        const tile  = new Geo.MapPlaneNode(null, map,
 	                                           Geo.MapNode.ROOT,
 	                                           level, tileX, tileY);
-	
+		    
+		tile.scale.set(tileSize, 1, tileSize);
 	        tile.position.set(dx * tileSize, 0, -dy * tileSize);
 	        tile.updateMatrixWorld();
 	        map.add(tile);
