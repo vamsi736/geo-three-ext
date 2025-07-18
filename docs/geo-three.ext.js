@@ -19,7 +19,12 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
 	  1)  Create MapView (empty container)
 	-------------------------------------------------------------*/
 	const map = new Geo.MapView(Geo.MapView.PLANAR, provider);
-	
+
+	/* ---- NEW: throw away the default root tile ---- */
+	if (map.root) {
+	    map.remove(map.root);   // get it out of the scenegraph
+	    map.root = null;        // so LOD code won’t touch it
+	}
 	/*-------------------------------------------------------------
 	  2)  Place and rotate the map flat
 	-------------------------------------------------------------*/
@@ -32,6 +37,7 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
 	const level = 8;
 	const centerLat = 25.276987;
 	const centerLon = 51.520008;
+	
 	
 	// Convert Doha lat/lon to tile X/Y for level 8
 	const centerCoords = Geo.UnitsUtils.datumsToSpherical(centerLat, centerLon);
@@ -56,7 +62,11 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
 	        map.add(tile);
 	    }
 	}
-	
+	map.updateMatrixWorld(true);
+
+	viewer.overlays.addScene('map');
+	viewer.overlays.addMesh(map, 'map');
+
 	// Move the whole map to center on Doha
 	map.position.set(centerCoords.x, 0, -centerCoords.y);
 
@@ -74,6 +84,7 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
                 const modelBottom = bbox.min.z;
                 map.position.z    = modelBottom - 0.01;   // ~1 cm below
                 map.updateMatrixWorld();
+		viewer.impl.invalidate(true);
             });
 
         /*-------------------------------------------------------------
