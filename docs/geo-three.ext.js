@@ -49,16 +49,25 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
 	// Size of one tile in meters
 	const tileSize = Geo.UnitsUtils.EARTH_PERIMETER / Math.pow(2, level);
 	
-	for (let dx = -1; dx <= 1; dx++) {
-	    for (let dy = -1; dy <= 1; dy++) {
+	// How many tiles you want:
+	//   halfTilesX  → west & east of the centre
+	//   tilesNorth  → rows north  of the centre
+	//   tilesSouth  → rows south  of the centre
+	const halfTilesX = 2;   // 2 → 5-tile strip west⇄east
+	const tilesNorth = 1;   // one row above Doha
+	const tilesSouth = 4;   // four rows below Doha
+
+	for (let dx = -halfTilesX; dx <=  halfTilesX; dx++) {
+	    for (let dy = -tilesNorth; dy <= tilesSouth; dy++) {
 	        const tileX = centerX + dx;
 	        const tileY = centerY + dy;
 	
-	        const tile = new Geo.MapPlaneNode(null, map, Geo.MapNode.ROOT, level, tileX, tileY);
+	        const tile  = new Geo.MapPlaneNode(null, map,
+	                                           Geo.MapNode.ROOT,
+	                                           level, tileX, tileY);
 	
 	        tile.position.set(dx * tileSize, 0, -dy * tileSize);
 	        tile.updateMatrixWorld();
-	
 	        map.add(tile);
 	    }
 	}
