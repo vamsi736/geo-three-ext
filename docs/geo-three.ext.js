@@ -25,8 +25,7 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
 	    map.remove(map.root);   // get it out of the scenegraph
 	    map.root = null;        // so LOD code won’t touch it
 
-	    map.scale.set(1, 1, 1);   // no 40 000 km scale
-  	    map.geometry = null;      // don’t render that invisible root mesh
+	    
 	}
 	/*-------------------------------------------------------------
 	  2)  Place and rotate the map flat
