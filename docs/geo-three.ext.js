@@ -45,7 +45,7 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
 	// Convert Doha lat/lon to tile X/Y for level 8
 	const centerCoords = Geo.UnitsUtils.datumsToSpherical(centerLat, centerLon);
 	const numTiles = 1 << level;             // === Math.pow(2, level)
-	const radLat   = THREE.MathUtils.degToRad(centerLat);
+	const radLat = centerLat * Math.PI / 180;
 	const centerX  = Math.floor((centerLon + 180) / 360 * numTiles);
 	const centerY  = Math.floor((1 - Math.log(Math.tan(radLat) + 1 / Math.cos(radLat)) / Math.PI) / 2 * numTiles);
 
