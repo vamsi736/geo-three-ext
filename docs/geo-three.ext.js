@@ -8,7 +8,7 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
          0)  Mapbox provider
         -------------------------------------------------------------*/
         const MAPBOX_TOKEN = "pk.eyJ1IjoidmFtc2k3MzYiLCJhIjoiY21kNnpyeHViMDQwYjJpczhwdnk5bmRqaSJ9.gYlJEd0xPN7YJVehWuvgPA";
-        const MAPBOX_STYLE = "mapbox/satellite-v9";   // try "satellite-v9" etc.
+        const MAPBOX_STYLE = "mapbox/streets-v11";   // try "satellite-v9" etc.
         const provider     = new Geo.MapBoxProvider(
                                 MAPBOX_TOKEN,
                                 MAPBOX_STYLE,
@@ -290,7 +290,7 @@ Autodesk.Viewing.theExtensionManager.registerExtension('GeoThreeExtension', GeoT
 	UnitsUtils.EARTH_ORIGIN = UnitsUtils.EARTH_PERIMETER / 2.0;
 
 	class MapPlaneNode extends MapNode {
-	    constructor(parentNode = null, mapView = null, location = MapNode.ROOT, level = 7, x = 82, y = 52) { // Doha level = 7, x = 82, y = 52
+	    constructor(parentNode = null, mapView = null, location = MapNode.ROOT, level = 7, x = 82, y = 54) { // SanFrancisco level = 7, x = 20, y = 49
 	        super(parentNode, mapView, location, level, x, y, MapPlaneNode.GEOMETRY, new three.MeshBasicMaterial({ disableEnvMap:true, depthTest:true, depthWrite:false,  side: three.DoubleSide, transparent:false, wireframe: false }));
 	        this.matrixAutoUpdate = false;
 	        this.isMesh = true;
