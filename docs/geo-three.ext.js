@@ -41,9 +41,10 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
 	
 	// Convert Doha lat/lon to tile X/Y for level 8
 	const centerCoords = Geo.UnitsUtils.datumsToSpherical(centerLat, centerLon);
-	const numTiles = Math.pow(2, level);
-	const centerX = Math.floor((centerLon + 180) / 360 * numTiles);
-	const centerY = Math.floor((1 - Math.log(Math.tan(centerLat * Math.PI / 180) + 1 / Math.cos(centerLat * Math.PI / 180)) / Math.PI) / 2 * numTiles);
+	const numTiles = 1 << level;             // === Math.pow(2, level)
+	const radLat   = THREE.MathUtils.degToRad(centerLat);
+	const centerX  = Math.floor((centerLon + 180) / 360 * numTiles);
+	const centerY  = Math.floor((1 - Math.log(Math.tan(radLat) + 1 / Math.cos(radLat)) / Math.PI) / 2 * numTiles);
 
 	
 	// Size of one tile in meters
@@ -57,20 +58,22 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
 	const tilesNorth = 3;   // one row above Doha
 	const tilesSouth = 6;   // four rows below Doha
 
-	for (let dx = -halfTilesX; dx <=  halfTilesX; dx++) {
-	    for (let dy = -tilesNorth; dy <= tilesSouth; dy++) {
-	        const tileX = centerX + dx;
-	        const tileY = centerY + dy;
+	for (let dx = -halfTilesX; dx <= halfTilesX; ++dx) {
+	  for (let dy = -tilesNorth; dy <= tilesSouth; ++dy) {
 	
-	        const tile  = new Geo.MapPlaneNode(null, map,
-	                                           Geo.MapNode.ROOT,
-	                                           level, tileX, tileY);
-		    
-		tile.scale.set(tileSize, 1, tileSize);
-	        tile.position.set(dx * tileSize, 0, -dy * tileSize);
-	        tile.updateMatrixWorld();
-	        map.add(tile);
-	    }
+	    const tile = new Geo.MapPlaneNode(
+	        null, map, Geo.MapNode.ROOT,
+	        level,
+	        centerX + dx,   // quadtree-X of this tile
+	        centerY + dy);  // quadtree-Y of this tile
+	                      
+	
+	    /* place the tile on our big ground plane */
+	    tile.position.set(dx * tileSize, 0, -dy * tileSize);
+	    tile.updateMatrixWorld();
+	
+	    map.add(tile);
+	  }
 	}
 	map.updateMatrixWorld(true);
 
