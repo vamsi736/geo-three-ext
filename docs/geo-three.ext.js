@@ -53,7 +53,7 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
 	//   halfTilesX  → west & east of the centre
 	//   tilesNorth  → rows north  of the centre
 	//   tilesSouth  → rows south  of the centre
-	const halfTilesX = 2;   // 2 → 5-tile strip west⇄east
+	const halfTilesX = 20;   // 2 → 5-tile strip west⇄east
 	const tilesNorth = 10;   // one row above Doha
 	const tilesSouth = 40;   // four rows below Doha
 
