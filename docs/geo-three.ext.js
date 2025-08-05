@@ -34,7 +34,7 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
 
 	// Manual offset in meters to align the model with the map.
 	const offsetX = 30000; // Positive X is East.
-	const offsetZ = -20000; // Negative Z is South.
+	const offsetZ = -10000; // Negative Z is South.
 
 	map.position.set(coords.x + offsetX, 0, -coords.y + offsetZ);
        
@@ -52,7 +52,7 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
         viewer.addEventListener(Autodesk.Viewing.GEOMETRY_LOADED_EVENT, () => {
             const bbox        = viewer.model.getBoundingBox();
             const modelBottom = bbox.min.z;
-            map.position.z    = modelBottom - 0.01;   // ~1 cm below
+            map.position.y    = modelBottom - 0.01;   // Use .y for vertical position
             map.updateMatrixWorld();
         }, { once: true }); // Using { once: true } is a cleaner way to run an event listener just once.
 
