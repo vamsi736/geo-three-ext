@@ -54,6 +54,15 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
             const modelBottom = bbox.min.y; // Use .y for the lowest VERTICAL point
             map.position.y    = modelBottom - 0.01;   // Use .y for vertical position
             map.updateMatrixWorld();
+
+            // After moving the map, update the camera to look at the new vertical position.
+            const cam = viewer.getCamera();
+            const target = cam.target.clone();
+            const position = cam.position.clone();
+            const verticalOffset = position.y - target.y;
+            target.y = modelBottom;
+            position.y = modelBottom + verticalOffset;
+            viewer.navigation.setView(position, target);
         }, { once: true }); // Using { once: true } is a cleaner way to run an event listener just once.
 
         /*-------------------------------------------------------------
