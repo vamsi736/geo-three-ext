@@ -51,7 +51,7 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
         -------------------------------------------------------------*/
         viewer.addEventListener(Autodesk.Viewing.GEOMETRY_LOADED_EVENT, () => {
             const bbox        = viewer.model.getBoundingBox();
-            const modelBottom = bbox.min.z;
+            const modelBottom = bbox.min.y; // Use .y for the lowest VERTICAL point
             map.position.y    = modelBottom - 0.01;   // Use .y for vertical position
             map.updateMatrixWorld();
         }, { once: true }); // Using { once: true } is a cleaner way to run an event listener just once.
