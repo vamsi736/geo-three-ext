@@ -165,10 +165,10 @@ Autodesk.Viewing.theExtensionManager.registerExtension('GeoThreeExtension', GeoT
 	            }
 	        }
 
-		    this.addAttribute('index',    new three.BufferAttribute(new Uint32Array(indices),  1));
-	        this.addAttribute('position', new three.BufferAttribute(new Float32Array(vertices), 3));
-	        this.addAttribute('normal', new three.BufferAttribute(new Float32Array(normals), 3));
-	        this.addAttribute('uv', new three.BufferAttribute(new Float32Array(uvs), 2));
+		    this.setIndex(new three.BufferAttribute(new Uint32Array(indices),  1));
+	        this.setAttribute('position', new three.BufferAttribute(new Float32Array(vertices), 3));
+	        this.setAttribute('normal', new three.BufferAttribute(new Float32Array(normals), 3));
+	        this.setAttribute('uv', new three.BufferAttribute(new Float32Array(uvs), 2));
 	    }
 	}
 
@@ -553,14 +553,14 @@ Autodesk.Viewing.theExtensionManager.registerExtension('GeoThreeExtension', GeoT
 	    fetchTile(zoom, x, y) {
 	        return new Promise((resolve, reject) => {
 	            const image = document.createElement('img');
-	            image.onload = function () {
+	            image.onload = () => {
 	                resolve(image);
 	            };
-	            image.onerror = function () {
+	            image.onerror = () => {
 	                reject();
 	            };
 	            image.crossOrigin = 'Anonymous';
-	            image.src = 'http://ecn.' + this.subdomain + '.tiles.virtualearth.net/tiles/' + this.type + BingMapsProvider.quadKey(zoom, x, y) + '.jpeg?g=1173';
+	            image.src = `http://ecn.${this.subdomain}.tiles.virtualearth.net/tiles/${this.type}${BingMapsProvider.quadKey(zoom, x, y)}.jpeg?g=1173`;
 	        });
 	    }
 	}
@@ -601,10 +601,10 @@ Autodesk.Viewing.theExtensionManager.registerExtension('GeoThreeExtension', GeoT
 	    fetchTile(zoom, x, y) {
 	        return new Promise((resolve, reject) => {
 	            const image = document.createElement('img');
-	            image.onload = function () {
+	            image.onload = () => {
 	                resolve(image);
 	            };
-	            image.onerror = function () {
+	            image.onerror = () => {
 	                reject();
 	            };
 	            image.crossOrigin = 'Anonymous';
@@ -633,16 +633,16 @@ Autodesk.Viewing.theExtensionManager.registerExtension('GeoThreeExtension', GeoT
 	        this.nextServer();
 	        return new Promise((resolve, reject) => {
 	            const image = document.createElement('img');
-	            image.onload = function () {
+	            image.onload = () => {
 	                resolve(image);
 	            };
-	            image.onerror = function () {
+	            image.onerror = () => {
 	                reject();
 	            };
 	            image.crossOrigin = 'Anonymous';
-	            image.src = 'https://' + this.server + '.' + this.style + '.maps.api.here.com/maptile/2.1/maptile/' +
-	                this.version + '/' + this.scheme + '/' + zoom + '/' + x + '/' + y + '/' +
-	                this.size + '/' + this.format + '?app_id=' + this.appId + '&app_code=' + this.appCode;
+	            image.src = `https://${this.server}.${this.style}.maps.api.here.com/maptile/2.1/maptile/` +
+	                `${this.version}/${this.scheme}/${zoom}/${x}/${y}/` +
+	                `${this.size}/${this.format}?app_id=${this.appId}&app_code=${this.appCode}`;
 	        });
 	    }
 	}
@@ -673,10 +673,10 @@ Autodesk.Viewing.theExtensionManager.registerExtension('GeoThreeExtension', GeoT
 	    fetchTile(zoom, x, y) {
 	        return new Promise((resolve, reject) => {
 	            const image = document.createElement('img');
-	            image.onload = function () {
+	            image.onload = () => {
 	                resolve(image);
 	            };
-	            image.onerror = function () {
+	            image.onerror = () => {
 	                reject();
 	            };
 	            image.crossOrigin = 'Anonymous';
