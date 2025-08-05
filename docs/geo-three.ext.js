@@ -49,17 +49,12 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
          5)  Drop the map so it touches the bottom of the model
              (wait until geometry is loaded)
         -------------------------------------------------------------*/
-        viewer.addEventListener(
-            Autodesk.Viewing.GEOMETRY_LOADED_EVENT,
-            function once () {
-                viewer.removeEventListener(
-                    Autodesk.Viewing.GEOMETRY_LOADED_EVENT, once);
-
-                const bbox        = viewer.model.getBoundingBox();
-                const modelBottom = bbox.min.z;
-                map.position.z    = modelBottom - 0.01;   // ~1 cm below
-                map.updateMatrixWorld();
-            });
+        viewer.addEventListener(Autodesk.Viewing.GEOMETRY_LOADED_EVENT, () => {
+            const bbox        = viewer.model.getBoundingBox();
+            const modelBottom = bbox.min.z;
+            map.position.z    = modelBottom - 0.01;   // ~1 cm below
+            map.updateMatrixWorld();
+        }, { once: true }); // Using { once: true } is a cleaner way to run an event listener just once.
 
         /*-------------------------------------------------------------
          6)  Camera helper (optional)
@@ -67,9 +62,13 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
         viewer.autocam.shotParams.destinationPercent = 3;
         viewer.autocam.shotParams.duration           = 3;
 
+        // Calculate the final position after applying offsets
+        const finalX = coords.x + offsetX;
+        const finalZ = -coords.y + offsetZ;
+
         const cam = viewer.getCamera();
-        cam.target  .set(coords.x, 0, -coords.y);
-        cam.position.set(coords.x, 1000, -coords.y);
+        cam.target.set(finalX, 0, finalZ);
+        cam.position.set(finalX, 1000, finalZ); // Position camera 1000m above the target
 
         /*-------------------------------------------------------------
          7)  Keep map LOD updating as you orbit
