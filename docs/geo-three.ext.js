@@ -34,7 +34,7 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
 
 	// Manual offset in meters to align the model with the map.
 	const offsetX = 30000; // Positive X is East.
-	const offsetZ = -10000; // Negative Z is South.
+	const offsetZ = -20000; // Negative Z is South.
 
 	map.position.set(coords.x + offsetX, 0, -coords.y + offsetZ);
        
