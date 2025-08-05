@@ -14,78 +14,36 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
                                 MAPBOX_STYLE,
                                 Geo.MapBoxProvider.STYLE);
 
-        
         /*-------------------------------------------------------------
-	  1)  Create MapView (empty container)
-	-------------------------------------------------------------*/
-	const map = new Geo.MapView(Geo.MapView.PLANAR, provider);
+         1)  Create the map (the library will auto-create a root tile)
+             – we already set that tile to Doha by changing the
+               MapPlaneNode *defaults* (x = 82, y = 54, level = 7)
+        -------------------------------------------------------------*/
+        const map = new Geo.MapView(Geo.MapView.PLANAR, provider);
 
-	/* ---- NEW: throw away the default root tile ---- */
-	if (map.root) {
-	    map.remove(map.root);   // get it out of the scenegraph
-	    map.root = null;        // so LOD code won’t touch it
+        /*-------------------------------------------------------------
+         2)  Make the map lie flat (+90° about X exactly once)
+        -------------------------------------------------------------*/
+        map.rotation.set(Math.PI / 2, 0, 0);
+        map.updateMatrixWorld();
 
-	    
-	}
-	/*-------------------------------------------------------------
-	  2)  Place and rotate the map flat
-	-------------------------------------------------------------*/
-	map.rotation.set(Math.PI / 2, 0, 0);
-	map.updateMatrixWorld();
-	
-	/*-------------------------------------------------------------
-	  3)  Create 3×3 tiles centered on Doha at zoom level 8
-	-------------------------------------------------------------*/
-	const level = 7;
-	const centerLat = 25.276987;
-	const centerLon = 51.520008;
-	
-	
-	// Convert Doha lat/lon to tile X/Y for level 8
-	const centerCoords = Geo.UnitsUtils.datumsToSpherical(centerLat, centerLon);
-	const numTiles = 1 << level;             // === Math.pow(2, level)
-	const radLat = centerLat * Math.PI / 180;
-	const centerX  = Math.floor((centerLon + 180) / 360 * numTiles);
-	const centerY  = Math.floor((1 - Math.log(Math.tan(radLat) + 1 / Math.cos(radLat)) / Math.PI) / 2 * numTiles);
+        /*-------------------------------------------------------------
+         3)  Move the map horizontally to Doha lat/lon
+        -------------------------------------------------------------*/
+        const coords = Geo.UnitsUtils.datumsToSpherical(25.276987, 51.520008);
 
-	
-	// Size of one tile in meters
-	const tileSize = Geo.UnitsUtils.EARTH_PERIMETER / Math.pow(2, level);
-	
-	// How many tiles you want:
-	//   halfTilesX  → west & east of the centre
-	//   tilesNorth  → rows north  of the centre
-	//   tilesSouth  → rows south  of the centre
-	const halfTilesX = 4;   // 2 → 5-tile strip west⇄east
-	const tilesNorth = 3;   // one row above Doha
-	const tilesSouth = 6;   // four rows below Doha
+	// Manual offset in meters (positive = east/north, negative = west/south)
+	const offsetX = 20000; // Move map west by 200m
+	const offsetZ = 150;  // Move map north by 150m
 
-	for (let dx = -halfTilesX; dx <= halfTilesX; ++dx) {
-	  for (let dy = -tilesNorth; dy <= tilesSouth; ++dy) {
-	
-	    const tile = new Geo.MapPlaneNode(
-	        null, map, Geo.MapNode.ROOT,
-	        level,
-	        centerX + dx,   // quadtree-X of this tile
-	        centerY + dy);   // quadtree-Y of this tile
-	                      
-	
-	    /* place the tile on our big ground plane */
-	    tile.scale.set(tileSize, 1, tileSize);
-	    tile.position.set(dx * tileSize, 0, -dy * tileSize);
-	    tile.updateMatrix(); 
-	    tile.updateMatrixWorld();
-	
-	    map.add(tile);
-	  }
-	}
-	map.updateMatrixWorld(true);
+	map.position.set(coords.x + offsetX, 0, -coords.y + offsetZ);
+       
 
-	viewer.overlays.addScene('map');
-	viewer.overlays.addMesh(map, 'map');
-
-	// Move the whole map to center on Doha
-	map.position.set(centerCoords.x, 0, -centerCoords.y);
+        /*-------------------------------------------------------------
+         4)  Add the map into Forge overlay
+        -------------------------------------------------------------*/
+        viewer.overlays.addScene('map');
+        viewer.overlays.addMesh(map, 'map');
 
         /*-------------------------------------------------------------
          5)  Drop the map so it touches the bottom of the model
@@ -101,7 +59,6 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
                 const modelBottom = bbox.min.z;
                 map.position.z    = modelBottom - 0.01;   // ~1 cm below
                 map.updateMatrixWorld();
-		viewer.impl.invalidate(true);
             });
 
         /*-------------------------------------------------------------
@@ -111,8 +68,8 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
         viewer.autocam.shotParams.duration           = 3;
 
         const cam = viewer.getCamera();
-        cam.target.set(centerCoords.x, 0, -centerCoords.y);
-	cam.position.set(centerCoords.x, 1000, -centerCoords.y);
+        cam.target  .set(coords.x, 0, -coords.y);
+        cam.position.set(coords.x, 1000, -coords.y);
 
         /*-------------------------------------------------------------
          7)  Keep map LOD updating as you orbit
@@ -333,7 +290,7 @@ Autodesk.Viewing.theExtensionManager.registerExtension('GeoThreeExtension', GeoT
 	UnitsUtils.EARTH_ORIGIN = UnitsUtils.EARTH_PERIMETER / 2.0;
 
 	class MapPlaneNode extends MapNode {
-	    constructor(parentNode = null, mapView = null, location = MapNode.ROOT, level = 8, x = 164, y = 113) { // SanFrancisco level = 7, x = 82, y = 54
+	    constructor(parentNode = null, mapView = null, location = MapNode.ROOT, level = 7, x = 82, y = 54) { // SanFrancisco level = 7, x = 20, y = 49
 	        super(parentNode, mapView, location, level, x, y, MapPlaneNode.GEOMETRY, new three.MeshBasicMaterial({ disableEnvMap:true, depthTest:true, depthWrite:false,  side: three.DoubleSide, transparent:false, wireframe: false }));
 	        this.matrixAutoUpdate = false;
 	        this.isMesh = true;
