@@ -33,7 +33,7 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
         const coords = Geo.UnitsUtils.datumsToSpherical(25.276987, 51.520008);
 
 	// Manual offset in meters (positive = east/north, negative = west/south)
-	const offsetX = 20000; // Move map west by 200m
+	const offsetX = 30000; // Move map west by 200m
 	const offsetZ = 15000;  // Move map north by 150m
 
 	map.position.set(coords.x + offsetX, 0, -coords.y + offsetZ);
