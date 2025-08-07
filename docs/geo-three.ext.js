@@ -32,9 +32,9 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
         -------------------------------------------------------------*/
         const coords = Geo.UnitsUtils.datumsToSpherical(25.276987, 51.520008);
 
-	// Manual offset in meters to align the model with the map.
-	const offsetX = 30000; // Positive X is East.
-	const offsetZ = -10000; // Negative Z is South.
+	// Manual offset in meters (positive = east/north, negative = west/south)
+	const offsetX = 30000; // Move map west by 200m
+	const offsetZ = 15000;  // Move map north by 150m
 
 	map.position.set(coords.x + offsetX, 0, -coords.y + offsetZ);
        
@@ -49,21 +49,17 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
          5)  Drop the map so it touches the bottom of the model
              (wait until geometry is loaded)
         -------------------------------------------------------------*/
-        viewer.addEventListener(Autodesk.Viewing.GEOMETRY_LOADED_EVENT, () => {
-            const bbox        = viewer.model.getBoundingBox();
-            const modelBottom = bbox.min.y; // Use .y for the lowest VERTICAL point
-            map.position.y    = modelBottom - 0.01;   // Use .y for vertical position
-            map.updateMatrixWorld();
+        viewer.addEventListener(
+            Autodesk.Viewing.GEOMETRY_LOADED_EVENT,
+            function once () {
+                viewer.removeEventListener(
+                    Autodesk.Viewing.GEOMETRY_LOADED_EVENT, once);
 
-            // After moving the map, update the camera to look at the new vertical position.
-            const cam = viewer.getCamera();
-            const target = cam.target.clone();
-            const position = cam.position.clone();
-            const verticalOffset = position.y - target.y;
-            target.y = modelBottom;
-            position.y = modelBottom + verticalOffset;
-            viewer.navigation.setView(position, target);
-        }, { once: true }); // Using { once: true } is a cleaner way to run an event listener just once.
+                const bbox        = viewer.model.getBoundingBox();
+                const modelBottom = bbox.min.z;
+                map.position.z    = modelBottom - 0.01;   // ~1 cm below
+                map.updateMatrixWorld();
+            });
 
         /*-------------------------------------------------------------
          6)  Camera helper (optional)
@@ -71,13 +67,9 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
         viewer.autocam.shotParams.destinationPercent = 3;
         viewer.autocam.shotParams.duration           = 3;
 
-        // Calculate the final position after applying offsets
-        const finalX = coords.x + offsetX;
-        const finalZ = -coords.y + offsetZ;
-
         const cam = viewer.getCamera();
-        cam.target.set(finalX, 0, finalZ);
-        cam.position.set(finalX, 1000, finalZ); // Position camera 1000m above the target
+        cam.target  .set(coords.x, 0, -coords.y);
+        cam.position.set(coords.x, 1000, -coords.y);
 
         /*-------------------------------------------------------------
          7)  Keep map LOD updating as you orbit
@@ -173,10 +165,10 @@ Autodesk.Viewing.theExtensionManager.registerExtension('GeoThreeExtension', GeoT
 	            }
 	        }
 
-		    this.setIndex(new three.BufferAttribute(new Uint32Array(indices),  1));
-	        this.setAttribute('position', new three.BufferAttribute(new Float32Array(vertices), 3));
-	        this.setAttribute('normal', new three.BufferAttribute(new Float32Array(normals), 3));
-	        this.setAttribute('uv', new three.BufferAttribute(new Float32Array(uvs), 2));
+		    this.addAttribute('index',    new three.BufferAttribute(new Uint32Array(indices),  1));
+	        this.addAttribute('position', new three.BufferAttribute(new Float32Array(vertices), 3));
+	        this.addAttribute('normal', new three.BufferAttribute(new Float32Array(normals), 3));
+	        this.addAttribute('uv', new three.BufferAttribute(new Float32Array(uvs), 2));
 	    }
 	}
 
@@ -561,14 +553,14 @@ Autodesk.Viewing.theExtensionManager.registerExtension('GeoThreeExtension', GeoT
 	    fetchTile(zoom, x, y) {
 	        return new Promise((resolve, reject) => {
 	            const image = document.createElement('img');
-	            image.onload = () => {
+	            image.onload = function () {
 	                resolve(image);
 	            };
-	            image.onerror = () => {
+	            image.onerror = function () {
 	                reject();
 	            };
 	            image.crossOrigin = 'Anonymous';
-	            image.src = `http://ecn.${this.subdomain}.tiles.virtualearth.net/tiles/${this.type}${BingMapsProvider.quadKey(zoom, x, y)}.jpeg?g=1173`;
+	            image.src = 'http://ecn.' + this.subdomain + '.tiles.virtualearth.net/tiles/' + this.type + BingMapsProvider.quadKey(zoom, x, y) + '.jpeg?g=1173';
 	        });
 	    }
 	}
@@ -609,10 +601,10 @@ Autodesk.Viewing.theExtensionManager.registerExtension('GeoThreeExtension', GeoT
 	    fetchTile(zoom, x, y) {
 	        return new Promise((resolve, reject) => {
 	            const image = document.createElement('img');
-	            image.onload = () => {
+	            image.onload = function () {
 	                resolve(image);
 	            };
-	            image.onerror = () => {
+	            image.onerror = function () {
 	                reject();
 	            };
 	            image.crossOrigin = 'Anonymous';
@@ -641,16 +633,16 @@ Autodesk.Viewing.theExtensionManager.registerExtension('GeoThreeExtension', GeoT
 	        this.nextServer();
 	        return new Promise((resolve, reject) => {
 	            const image = document.createElement('img');
-	            image.onload = () => {
+	            image.onload = function () {
 	                resolve(image);
 	            };
-	            image.onerror = () => {
+	            image.onerror = function () {
 	                reject();
 	            };
 	            image.crossOrigin = 'Anonymous';
-	            image.src = `https://${this.server}.${this.style}.maps.api.here.com/maptile/2.1/maptile/` +
-	                `${this.version}/${this.scheme}/${zoom}/${x}/${y}/` +
-	                `${this.size}/${this.format}?app_id=${this.appId}&app_code=${this.appCode}`;
+	            image.src = 'https://' + this.server + '.' + this.style + '.maps.api.here.com/maptile/2.1/maptile/' +
+	                this.version + '/' + this.scheme + '/' + zoom + '/' + x + '/' + y + '/' +
+	                this.size + '/' + this.format + '?app_id=' + this.appId + '&app_code=' + this.appCode;
 	        });
 	    }
 	}
@@ -681,10 +673,10 @@ Autodesk.Viewing.theExtensionManager.registerExtension('GeoThreeExtension', GeoT
 	    fetchTile(zoom, x, y) {
 	        return new Promise((resolve, reject) => {
 	            const image = document.createElement('img');
-	            image.onload = () => {
+	            image.onload = function () {
 	                resolve(image);
 	            };
-	            image.onerror = () => {
+	            image.onerror = function () {
 	                reject();
 	            };
 	            image.crossOrigin = 'Anonymous';
