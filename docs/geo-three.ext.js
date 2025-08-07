@@ -31,10 +31,13 @@ class GeoThreeExtension extends Autodesk.Viewing.Extension {
          3)  Move the map horizontally to Doha lat/lon
         -------------------------------------------------------------*/
         const coords = Geo.UnitsUtils.datumsToSpherical(25.276987, 51.520008);
+		console.log("Original coords:", coords);
+		console.log("Final position:", coords.x + offsetX, 0, -coords.y + offsetZ);
 
-	// Manual offset in meters (positive = east/north, negative = west/south)
-	const offsetX = 30000; // Move map west by 200m
-	const offsetZ = 15000;  // Move map north by 150m
+		// Test different offsets and see which direction they move the model	
+		// Manual offset in meters (positive = east/north, negative = west/south)
+		const offsetX = 30000; // Move map west by 200m
+		const offsetZ = 15000;  // Move map north by 150m
 
 	map.position.set(coords.x + offsetX, 0, -coords.y + offsetZ);
        
